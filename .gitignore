@@ -1,0 +1,8 @@
+/text_chunks/
+/audio_chunks/
+/build/
+/.gradle/
+/.idea/
+/sound.wav
+/salida.txt
+/transcription.txt
