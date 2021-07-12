@@ -2,6 +2,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import java.io.File
+import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
@@ -16,24 +17,30 @@ suspend fun main(args: Array<String>) {
         File("transcription.txt").delete()
     }
 
-    "cmd.exe /c python ${PYTHON_PATH}mp3_to_wavs.py $mp3FileName".runCommand(timeout = 15,outPutFile = "salida.txt")
+    val chunkSizeMs = 10000
+    "cmd.exe /c python ${PYTHON_PATH}mp3_to_wavs.py $mp3FileName $chunkSizeMs".runCommand(timeout = 120,outPutFile = "salida.txt")
 
     val audioFolder = File("audio_chunks").walkTopDown().filter { it.isFile }.toList()
-    pepe(audioFolder)
+    convertWavToText(audioFolder)
 
-    (0..audioFolder.size-1).forEach {
+    val seconds = TimeUnit.MILLISECONDS.toSeconds(chunkSizeMs.toLong())
+    var dateTime =  LocalTime.of(0, 0, 1)
+    (audioFolder.indices).forEach {
         val textLine = File("text_chunks/chunk$it.txt").readText()
-        File("transcription.txt").appendText(textLine)
+
+        File("transcription.txt").appendText(dateTime.toString() + "| "+textLine)
+
+        dateTime = dateTime.plusSeconds(seconds)
     }
 
 }
 
-suspend  fun pepe(audioFolder: List<File>) {
+suspend  fun convertWavToText(audioFolder: List<File>) {
     val time = measureTimeMillis {
         val map = audioFolder.map { file ->
             GlobalScope.async {
                 "cmd.exe /c python ${PYTHON_PATH}convert_wav_to_text.py $file".runCommand(
-                    timeout = 15,
+                    timeout = 150,
                     outPutFile = "salida.txt"
                 )
             }
