@@ -11,14 +11,17 @@ val PYTHON_PATH = "C:\\temp\\test\\pyMp3ToText\\"
 
 suspend fun main(args: Array<String>) {
 
-    val mp3FileName = args[0]
+    val audioFileName = args[0]
 
     if (File("transcription.txt").exists()) {
         File("transcription.txt").delete()
     }
+    "cmd.exe /c python ${PYTHON_PATH}yt-audio-extractor.py $audioFileName".runCommand(timeout = 120,outPutFile = "salida.txt")
+
 
     val chunkSizeMs = 10000
-    "cmd.exe /c python ${PYTHON_PATH}mp3_to_wavs.py $mp3FileName $chunkSizeMs".runCommand(timeout = 120,outPutFile = "salida.txt")
+//    "cmd.exe /c python ${PYTHON_PATH}mp3_to_wavs.py $mp3FileName $chunkSizeMs".runCommand(timeout = 120,outPutFile = "salida.txt")
+    "cmd.exe /c python ${PYTHON_PATH}split_wavs.py audio.wav $chunkSizeMs".runCommand(timeout = 120,outPutFile = "salida.txt")
 
     val audioFolder = File("audio_chunks").walkTopDown().filter { it.isFile }.toList()
     convertWavToText(audioFolder)
