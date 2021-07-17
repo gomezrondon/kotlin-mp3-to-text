@@ -13,17 +13,7 @@ suspend fun main(args: Array<String>) {
 
     val audioFileName = args[0]
 
-    if (File("text_chunks").exists()) {
-        File("text_chunks").deleteRecursively()
-    }
-
-    if (File("audio_chunks").exists()) {
-        File("audio_chunks").deleteRecursively()
-    }
-
-    if (File("transcription.txt").exists()) {
-        File("transcription.txt").delete()
-    }
+    resetFolders()
 
     // extract audio from video
     "cmd.exe /c python ${PYTHON_PATH}yt-audio-extractor.py $audioFileName".runCommand(timeout = 120,outPutFile = "salida.txt")
@@ -34,16 +24,20 @@ suspend fun main(args: Array<String>) {
     val audioFolder = File("audio_chunks").walkTopDown().filter { it.isFile }.toList()
     convertWavToText(audioFolder)
 
+    combineTextFiles(chunkSizeMs, audioFolder)
+
+}
+
+private fun combineTextFiles(chunkSizeMs: Int, audioFolder: List<File>) {
     val seconds = TimeUnit.MILLISECONDS.toSeconds(chunkSizeMs.toLong())
-    var dateTime =  LocalTime.of(0, 0, 1)
+    var dateTime = LocalTime.of(0, 0, 1)
     (audioFolder.indices).forEach {
         val textLine = File("text_chunks/chunk$it.txt").readText()
 
-        File("transcription.txt").appendText(dateTime.toString() + "| "+textLine)
+        File("transcription.txt").appendText(dateTime.toString() + "| " + textLine)
 
         dateTime = dateTime.plusSeconds(seconds)
     }
-
 }
 
 suspend  fun convertWavToText(audioFolder: List<File>) {
@@ -85,4 +79,21 @@ fun String.runCommand(workingDir: File? = null, timeout:Long, outPutFile:String)
     }
 
 
+}
+
+
+private fun resetFolders() {
+    if (File("text_chunks").exists()) {
+        File("text_chunks").deleteRecursively()
+    }
+    File("text_chunks").mkdir()
+
+    if (File("audio_chunks").exists()) {
+        File("audio_chunks").deleteRecursively()
+    }
+    File("audio_chunks").mkdir()
+
+    if (File("transcription.txt").exists()) {
+        File("transcription.txt").delete()
+    }
 }
