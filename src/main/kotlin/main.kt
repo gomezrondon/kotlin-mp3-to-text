@@ -13,14 +13,22 @@ suspend fun main(args: Array<String>) {
 
     val audioFileName = args[0]
 
+    if (File("text_chunks").exists()) {
+        File("text_chunks").deleteRecursively()
+    }
+
+    if (File("audio_chunks").exists()) {
+        File("audio_chunks").deleteRecursively()
+    }
+
     if (File("transcription.txt").exists()) {
         File("transcription.txt").delete()
     }
+
+    // extract audio from video
     "cmd.exe /c python ${PYTHON_PATH}yt-audio-extractor.py $audioFileName".runCommand(timeout = 120,outPutFile = "salida.txt")
 
-
     val chunkSizeMs = 10000
-//    "cmd.exe /c python ${PYTHON_PATH}mp3_to_wavs.py $mp3FileName $chunkSizeMs".runCommand(timeout = 120,outPutFile = "salida.txt")
     "cmd.exe /c python ${PYTHON_PATH}split_wavs.py audio.wav $chunkSizeMs".runCommand(timeout = 120,outPutFile = "salida.txt")
 
     val audioFolder = File("audio_chunks").walkTopDown().filter { it.isFile }.toList()
