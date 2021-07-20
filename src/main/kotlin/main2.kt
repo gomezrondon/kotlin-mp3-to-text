@@ -9,17 +9,20 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.time.LocalTime
-import java.util.concurrent.TimeUnit
 import javax.sound.sampled.AudioSystem
 
- suspend fun main(args: Array<String>) {
+ suspend fun main(args: Array<String>) { // <Video mp4 input file path> <Audio output wav file path>
 
-     val audioFilePath = args[0]
+     val videoFilePath = args[0]
+     val audioFilePath = args[1]
 
-     resetFolders()
+     resetFolders(audioFilePath)
 
-     val chunkSizeMs = 50000 // 50 seconds
-    "cmd.exe /c python ${PYTHON_PATH}split_wavs.py $audioFilePath $chunkSizeMs".runCommand(timeout = 120,outPutFile = "salida.txt")
+     //Extract WAV audio from Mp4 Video
+     "cmd.exe /c ffmpeg -i $videoFilePath -b:a 96K -vn $audioFilePath".runCommand(timeout = 120,outPutFile = "salida.txt")
+
+     val chunkSizeMs = 50 // 50 seconds
+    "cmd.exe /c ffmpeg -i $audioFilePath -f segment -segment_time $chunkSizeMs audio_chunks/chunk%d.wav".runCommand(timeout = 120,outPutFile = "salida.txt")
 
     val audioFolder = File("audio_chunks").walkTopDown().filter { it.isFile }.toList()
 
@@ -29,7 +32,15 @@ import javax.sound.sampled.AudioSystem
 
 }
 
-private fun resetFolders() {
+/**
+ * Reset working folders and delete transcription file
+ */
+private fun resetFolders(audioFilePath: String) {
+
+    if (File(audioFilePath).exists()) {
+        File(audioFilePath).delete()
+    }
+
     if (File("text_chunks").exists()) {
         File("text_chunks").deleteRecursively()
     }
@@ -45,6 +56,9 @@ private fun resetFolders() {
     }
 }
 
+/**
+ * Convert a list of wav files to text files
+ */
 suspend fun convertWavToText2(audioFolder: List<File>) {
 
      val indexed = audioFolder.map {  file ->
@@ -63,14 +77,13 @@ suspend fun convertWavToText2(audioFolder: List<File>) {
 
 
 private fun combineTextFiles(chunkSizeMs: Int, audioFolder: List<File>) {
-    val seconds = TimeUnit.MILLISECONDS.toSeconds(chunkSizeMs.toLong())
     var dateTime = LocalTime.of(0, 0, 1)
     (audioFolder.indices).forEach {
         val textLine = File("text_chunks/chunk$it.txt").readText()
 
         File("transcription.txt").appendText(dateTime.toString() + "|\n " + textLine)
 
-        dateTime = dateTime.plusSeconds(seconds)
+        dateTime = dateTime.plusSeconds(chunkSizeMs.toLong())
     }
 }
 
@@ -90,11 +103,8 @@ fun speechRecognitionOffline(audioFile:String): String {
                     while (ais.read(b).also { nbytes = it } >= 0) {
                         if (recognizer.acceptWaveForm(b, nbytes)) {
                             //   System.out.println(recognizer.getResult());
-                        } else {
-                            //   System.out.println(recognizer.getPartialResult());
                         }
                     }
-                    //  println(recognizer.finalResult)
                     return cleanOutputRecognizedText(recognizer.finalResult)
                 }
             }
