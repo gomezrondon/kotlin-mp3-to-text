@@ -1,7 +1,10 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.5.20'
     id 'application'
+    id 'org.springframework.boot' version '2.5.2'
 }
+
+apply plugin: 'io.spring.dependency-management'
 
 group = 'com.gomezrondon'
 version = '1.0-SNAPSHOT'
@@ -28,5 +31,5 @@ compileTestKotlin {
 }
 
 application {
-    mainClassName = 'MainKt'
+    mainClassName = 'Main2Kt'
 }
