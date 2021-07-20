@@ -18,7 +18,7 @@ unzip it and change its folder name to just "model"
 
 ### 5) execute:
  ```
-gradle run --args='C:\temp\video.mp4 audio.wav'
+gradle run --args="'C:\temp\video.mp4' audio.wav"
  ```
  
  ### 6) the output will be a "Transcription.txt" file.
