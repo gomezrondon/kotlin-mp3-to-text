@@ -1,5 +1,5 @@
 # kotlin-mp3-to-text
-Using Kotlin to manage the transcription of mp3 to text
+Program in kotlin that extract audio from a MP4 video and transcribe it to text.
 
 ### 1) You need to install the ffmpeg library:
 https://github.com/BtbN/FFmpeg-Builds/releases 
