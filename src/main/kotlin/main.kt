@@ -28,17 +28,7 @@ suspend fun main(args: Array<String>) {
 
 }
 
-private fun combineTextFiles(chunkSizeMs: Int, audioFolder: List<File>) {
-    val seconds = TimeUnit.MILLISECONDS.toSeconds(chunkSizeMs.toLong())
-    var dateTime = LocalTime.of(0, 0, 1)
-    (audioFolder.indices).forEach {
-        val textLine = File("text_chunks/chunk$it.txt").readText()
 
-        File("transcription.txt").appendText(dateTime.toString() + "| " + textLine)
-
-        dateTime = dateTime.plusSeconds(seconds)
-    }
-}
 
 suspend  fun convertWavToText(audioFolder: List<File>) {
     val time = measureTimeMillis {

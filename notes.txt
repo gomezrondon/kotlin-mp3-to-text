@@ -10,3 +10,15 @@ ffmpeg -i apple.mp4 -b:a 96K -vn apple01.wav
 
 #how to convert mp3 to wav
 python mp3_to_wavs.py apple01.mp3 apple01.wav
+------------------
+
+
+        Mono.just(args)
+                .thenMany(Flux.fromArray(args))
+                .flatMap(x -> Mono.just(x + " mas"))
+                .flatMap(x -> Mono.just(x + "  2"))
+/*                .map(x -> {
+                    Main2Kt.resetFolders(x[1]);
+                   return x;
+                })*/
+                .subscribe(System.out::println);

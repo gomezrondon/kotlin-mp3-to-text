@@ -19,12 +19,13 @@ import javax.sound.sampled.AudioSystem
      resetFolders(audioFilePath)
 
      //Extract WAV audio from Mp4 Video
-     "cmd.exe /c ffmpeg -i $videoFilePath -b:a 96K -vn $audioFilePath".runCommand(timeout = 120,outPutFile = "salida.txt")
+     extractWavFromMp4(videoFilePath, audioFilePath)
 
+     //Split Wav file into chunks
      val chunkSizeMs = 50 // 50 seconds
-    "cmd.exe /c ffmpeg -i $audioFilePath -f segment -segment_time $chunkSizeMs audio_chunks/chunk%d.wav".runCommand(timeout = 120,outPutFile = "salida.txt")
+     splitWavToChunk(audioFilePath, chunkSizeMs)
 
-    val audioFolder = File("audio_chunks").walkTopDown().filter { it.isFile }.toList()
+    val audioFolder = readAudioChunksFiles()
 
     convertWavToText2(audioFolder)
 
@@ -32,10 +33,31 @@ import javax.sound.sampled.AudioSystem
 
 }
 
+public fun readAudioChunksFiles() = File("audio_chunks").walkTopDown().filter { it.isFile }.toList()
+
+public fun splitWavToChunk(audioFilePath: String, chunkSizeMs: Int) {
+    "cmd.exe /c ffmpeg -i $audioFilePath -f segment -segment_time $chunkSizeMs audio_chunks/chunk%d.wav".runCommand(
+        timeout = 120,
+        outPutFile = "salida.txt"
+    )
+}
+
+public fun extractWavFromMp4(videoFilePath: String, audioFilePath: String) {
+    "cmd.exe /c ffmpeg -i $videoFilePath -b:a 96K -vn $audioFilePath".runCommand(
+        timeout = 120,
+        outPutFile = "salida.txt"
+    )
+}
+
+data class Variables(val videoFilePath: String, val audioFilePath:String, var chunkSizeMs:Int=0){
+    var list:MutableList<File> = mutableListOf()
+}
+
+
 /**
  * Reset working folders and delete transcription file
  */
-private fun resetFolders(audioFilePath: String) {
+public fun resetFolders(audioFilePath: String) {
 
     if (File(audioFilePath).exists()) {
         File(audioFilePath).delete()
@@ -63,11 +85,7 @@ suspend fun convertWavToText2(audioFolder: List<File>) {
 
      val indexed = audioFolder.map {  file ->
          GlobalScope.async {
-             val output = speechRecognitionOffline(file.path)
-             val fileName = file.nameWithoutExtension
-             if (File("text_chunks/$fileName.txt").createNewFile()) {
-                 File("text_chunks/$fileName.txt").appendText(output + "\n")
-             }
+             generateScript(file)
          }
      }
 
@@ -76,7 +94,22 @@ suspend fun convertWavToText2(audioFolder: List<File>) {
  }
 
 
-private fun combineTextFiles(chunkSizeMs: Int, audioFolder: List<File>) {
+fun convertWavToText3(audioFolder: List<File>) {
+    audioFolder.map {  file ->
+        generateScript(file)
+    }
+
+}
+
+private fun generateScript(file: File) {
+    val output = speechRecognitionOffline(file.path)
+    val fileName = file.nameWithoutExtension
+    if (File("text_chunks/$fileName.txt").createNewFile()) {
+        File("text_chunks/$fileName.txt").appendText(output + "\n")
+    }
+}
+
+public fun combineTextFiles(chunkSizeMs: Int, audioFolder: List<File>) {
     var dateTime = LocalTime.of(0, 0, 1)
     (audioFolder.indices).forEach {
         val textLine = File("text_chunks/chunk$it.txt").readText()
@@ -128,3 +161,4 @@ fun cleanOutputRecognizedText(result: String): String {
         .joinToString("\n")
 
 }
+
