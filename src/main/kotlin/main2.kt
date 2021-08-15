@@ -5,9 +5,12 @@ import org.vosk.LibVosk
 import org.vosk.LogLevel
 import org.vosk.Model
 import org.vosk.Recognizer
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.IOException
 import java.time.LocalTime
 import javax.sound.sampled.AudioSystem
 
@@ -101,12 +104,27 @@ fun convertWavToText3(audioFolder: List<File>) {
 
 }
 
+public fun getNameWithouExtenxion(file: File): String {
+    return file.nameWithoutExtension
+}
+
+
+
+
+data class genDto(val newName: String, val wavPath: String)
+
 private fun generateScript(file: File) {
     val output = speechRecognitionOffline(file.path)
     val fileName = file.nameWithoutExtension
-    if (File("text_chunks/$fileName.txt").createNewFile()) {
-        File("text_chunks/$fileName.txt").appendText(output + "\n")
+    val fullPahtFile = "text_chunks/$fileName.txt"
+    val textNewFile = File(fullPahtFile)
+    if (textNewFile.createNewFile()) {
+        writeToFile(textNewFile, output)
     }
+}
+
+public fun writeToFile(textNewFile: File, output: String) {
+    textNewFile.appendText(output + "\n")
 }
 
 public fun combineTextFiles(chunkSizeMs: Int, audioFolder: List<File>) {
@@ -160,5 +178,21 @@ fun cleanOutputRecognizedText(result: String): String {
         //.forEach { println(it) }
         .joinToString("\n")
 
+}
+
+
+public fun generateScriptMono(monoFile: Mono<File>): Mono<String> {
+    return monoFile
+        .map { algo:File -> algo.nameWithoutExtension }
+/*        .map { fileName -> "text_chunks/$fileName.txt" }
+//        .log()
+        .map { fullPath ->
+           val file = File(fullPath)
+            if (file.createNewFile()) {
+                val output = speechRecognitionOffline(file.path)
+                file.appendText(output + "\n")
+            }
+            file
+          }*/
 }
 
