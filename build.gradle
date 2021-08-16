@@ -17,6 +17,8 @@ repositories {
 }
 dependencies {
     implementation 'io.projectreactor:reactor-core:3.4.9'
+    testImplementation 'io.projectreactor:reactor-test:3.4.9'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
 
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.7.0'
     implementation group: 'com.alphacephei', name: 'vosk', version: '0.3.30+'

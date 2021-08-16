@@ -14,11 +14,7 @@ import java.util.stream.Collectors;
 public class TestReactive {
 
     public static void main(String[] args) {
-/*
-        File file = new File("C:\\temp\\test\\untitled\\audio_chunks\\chunk0.wav");
-        Main2Kt.generateScriptMono(Mono.just(file))
-                .log()
-                .subscribe();*/
+
 
 /*
         Mono<List<String>> listMono = Main2Kt.getListValues().collectList();
@@ -26,17 +22,9 @@ public class TestReactive {
 */
 
 
-        extracted(args);
+//        extracted(args);
 
-/*        Flux.just("red", "white", "blue")
-                .log()
-                .map(String::toUpperCase)
-                .subscribeOn(Schedulers.newParallel("sub"))
-                .publishOn(Schedulers.newParallel("sub"))
-                .subscribe(value -> {
-                    System.out.println("Consumed: " + value);
-                });*/
-
+        Flux.range(0, 10).log().subscribe();
     }
 
     private static void extracted(String[] args) {
