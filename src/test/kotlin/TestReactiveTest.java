@@ -1,17 +1,34 @@
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import reactor.util.function.Tuple2;
 
 import java.io.File;
 import java.time.Duration;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 class TestReactiveTest {
+
+
+
+    @Test
+    @DisplayName("flux concat letters 2 by 2, then turn the flux into a list")
+    void test11() {
+        var flux = Flux.fromIterable(List.of("a", "b", "c", "d", "e", "f"))
+                .window(2)
+                .log()
+                .flatMap(stringFlux -> stringFlux.collect(Collectors.joining()));  // a -> list[a, new]
+
+        List<String> list = flux // **** this should not be done... just for testing ****
+//                .log()
+                .collectList().block();
+
+        Assertions.assertEquals("[ab, cd, ef]", list.toString());
+    }
 
 
     @Test
