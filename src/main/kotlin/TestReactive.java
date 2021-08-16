@@ -22,9 +22,9 @@ public class TestReactive {
 */
 
 
-//        extracted(args);
+        extracted(args);
 
-        Flux.range(0, 10).log().subscribe();
+
     }
 
     private static void extracted(String[] args) {
