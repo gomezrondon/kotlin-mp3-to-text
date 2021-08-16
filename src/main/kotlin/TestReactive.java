@@ -1,10 +1,14 @@
+import com.sun.tools.javac.Main;
 import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class TestReactive {
@@ -16,14 +20,36 @@ public class TestReactive {
                 .log()
                 .subscribe();*/
 
+/*
+        Mono<List<String>> listMono = Main2Kt.getListValues().collectList();
+        listMono.flatMapMany(Flux::fromIterable).subscribe(System.out::println);
+*/
 
+
+        extracted(args);
+
+/*        Flux.just("red", "white", "blue")
+                .log()
+                .map(String::toUpperCase)
+                .subscribeOn(Schedulers.newParallel("sub"))
+                .publishOn(Schedulers.newParallel("sub"))
+                .subscribe(value -> {
+                    System.out.println("Consumed: " + value);
+                });*/
+
+    }
+
+    private static void extracted(String[] args) {
+        final long start = System.nanoTime();
         Mono.just(args)
-                .log(">>>> start process >>> ")
                 .map( x -> new Variables(x[0], x[1], 50))
                 .flatMap( variables -> {
                     Main2Kt.resetFolders(variables.getAudioFilePath());
                     Main2Kt.extractWavFromMp4(variables.getVideoFilePath(), variables.getAudioFilePath());
                     Main2Kt.splitWavToChunk(variables.getAudioFilePath(), variables.getChunkSizeMs());
+                    return Mono.just(variables);
+                })
+                .flatMap( variables -> {
                     List<File> files = Main2Kt.readAudioChunksFiles();
                     variables.setList(files);
                     return Mono.just(variables);
@@ -35,7 +61,7 @@ public class TestReactive {
                     Main2Kt.combineTextFiles(variables.getChunkSizeMs(), variables.getList());
                     return Mono.just("done!");
                 })
-                .log(">>>> End process >>> ")
+                .doFinally(endType -> System.out.println("Time taken : " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + " milliseconds."))
                 .subscribe(System.out::println);
     }
 

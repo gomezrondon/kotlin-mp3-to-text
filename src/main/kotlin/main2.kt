@@ -7,6 +7,7 @@ import org.vosk.Model
 import org.vosk.Recognizer
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.publisher.Mono.just
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -180,6 +181,9 @@ fun cleanOutputRecognizedText(result: String): String {
 
 }
 
+public fun getListValues(): Flux<String> {
+    return Flux.fromIterable(listOf("a", "javier", "test"))
+}
 
 public fun generateScriptMono(monoFile: Mono<File>): Mono<String> {
     return monoFile
