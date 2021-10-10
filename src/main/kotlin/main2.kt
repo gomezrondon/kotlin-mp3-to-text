@@ -7,20 +7,22 @@ import org.vosk.Model
 import org.vosk.Recognizer
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.core.publisher.Mono.just
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
-import java.io.IOException
 import java.time.LocalTime
+import java.util.concurrent.TimeUnit
 import javax.sound.sampled.AudioSystem
 
- suspend fun main(args: Array<String>) { // <Video mp4 input file path> <Audio output wav file path>
+//https://iyoutubetomp4.com/en/
+ suspend fun main(args: Array<String>) { // <Video mp4 input file path>
 
      val videoFilePath = args[0]
-     val audioFilePath = args[1]
+//     val audioFilePath = args[1]
+    val audioFilePath = "audio.wav"
 
-     resetFolders(audioFilePath)
+
+    resetFolders(audioFilePath)
 
      //Extract WAV audio from Mp4 Video
      extractWavFromMp4(videoFilePath, audioFilePath)
@@ -33,7 +35,8 @@ import javax.sound.sampled.AudioSystem
 
     convertWavToText2(audioFolder)
 
-    combineTextFiles(chunkSizeMs, audioFolder)
+    combineTextFiles(chunkSizeMs, audioFolder.size)
+//    combineTextFiles(50, 201)
 
 }
 
@@ -45,6 +48,8 @@ public fun splitWavToChunk(audioFilePath: String, chunkSizeMs: Int) {
         outPutFile = "salida.txt"
     )
 }
+
+
 
 public fun extractWavFromMp4(videoFilePath: String, audioFilePath: String) {
     "cmd.exe /c ffmpeg -i $videoFilePath -b:a 96K -vn $audioFilePath".runCommand(
@@ -128,12 +133,13 @@ public fun writeToFile(textNewFile: File, output: String) {
     textNewFile.appendText(output + "\n")
 }
 
-public fun combineTextFiles(chunkSizeMs: Int, audioFolder: List<File>) {
+public fun combineTextFiles(chunkSizeMs: Int, totalFiles: Int) {
     var dateTime = LocalTime.of(0, 0, 1)
-    (audioFolder.indices).forEach {
-        val textLine = File("text_chunks/chunk$it.txt").readText()
-
-        File("transcription.txt").appendText(dateTime.toString() + "|\n " + textLine)
+    (0..totalFiles).forEach {
+        if (File("text_chunks/chunk$it.txt").exists()) {
+            val textLine = File("text_chunks/chunk$it.txt").readText()
+            File("transcription.txt").appendText(dateTime.toString() + "|\n " + textLine)
+        }
 
         dateTime = dateTime.plusSeconds(chunkSizeMs.toLong())
     }
@@ -200,3 +206,25 @@ public fun generateScriptMono(monoFile: Mono<File>): Mono<String> {
           }*/
 }
 
+fun String.runCommand(workingDir: File? = null, timeout:Long, outPutFile:String) {
+    if (File(outPutFile).exists()) {
+        File(outPutFile).delete()
+    }
+    val process = ProcessBuilder(*split(" ").toTypedArray())
+        .directory(workingDir)
+        .redirectOutput(ProcessBuilder.Redirect.appendTo(File(outPutFile)))
+        .redirectError(ProcessBuilder.Redirect.INHERIT)
+        .start()
+
+    // File(outPutFile).readLines().forEach { println(it) }
+
+    if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
+        process.destroy()
+        throw RuntimeException("execution timed out: $this")
+    }
+    if (process.exitValue() != 0) {
+        throw RuntimeException("execution failed with code ${process.exitValue()}: $this")
+    }
+
+
+}

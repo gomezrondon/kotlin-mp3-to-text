@@ -46,7 +46,7 @@ public class TestReactive {
                     return   generateScriptsChunks(variables)
                             .then(Mono.just(variables));
                 }).flatMap( variables -> {
-                    Main2Kt.combineTextFiles(variables.getChunkSizeMs(), variables.getList());
+                    Main2Kt.combineTextFiles(variables.getChunkSizeMs(), variables.getList().size());
                     return Mono.just("done!");
                 })
                 .doFinally(endType -> System.out.println("Time taken : " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + " milliseconds."))
