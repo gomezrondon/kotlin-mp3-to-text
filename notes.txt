@@ -14,4 +14,6 @@ ffmpeg -i apple.mp4 -b:a 96K -vn apple01.wav
 
 #how to convert mp3 to wav
 python mp3_to_wavs.py apple01.mp3 apple01.wav
- 
+
+// how to execute
+java -jar kotlin-mp3-to-text.jar 1 C:\temp\video.mp4

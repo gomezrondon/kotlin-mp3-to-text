@@ -12,12 +12,14 @@ import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 import javax.sound.sampled.AudioSystem
 
-//https://iyoutubetomp4.com/en/
- suspend fun main(args: Array<String>) { // <Video mp4 input file path>
+/**
+ * param1 option
+ * param2 video path
+ * java -jar kotlin-mp3-to-text.jar 1 C:\temp\video.mp4
+ */
+ suspend fun main(args: Array<String>) {
 
-     val option = args[0]
-
-
+    val option = args[0]
 
     when (option) {
         "1" -> {
