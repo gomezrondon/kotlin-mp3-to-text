@@ -5,8 +5,6 @@ import org.vosk.LibVosk
 import org.vosk.LogLevel
 import org.vosk.Model
 import org.vosk.Recognizer
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -17,19 +15,36 @@ import javax.sound.sampled.AudioSystem
 //https://iyoutubetomp4.com/en/
  suspend fun main(args: Array<String>) { // <Video mp4 input file path>
 
-     val videoFilePath = args[0]
-//     val audioFilePath = args[1]
-    val audioFilePath = "audio.wav"
+     val option = args[0]
 
+
+
+    when (option) {
+        "1" -> {
+            val videoFilePath = args[1]
+            transcribeMp4Video(videoFilePath)
+        }
+        "2" -> {
+            val videoFilePath = args[1]
+            val chunkSizeMs = args[2].toInt()
+            resetFolder("video_chunks")
+            splitMp4ToChunk(videoFilePath, chunkSizeMs)
+        }
+    }
+
+}
+
+private suspend fun transcribeMp4Video(videoFilePath: String) {
+    val audioFilePath = "audio.wav"
 
     resetFolders(audioFilePath)
 
-     //Extract WAV audio from Mp4 Video
-     extractWavFromMp4(videoFilePath, audioFilePath)
+    //Extract WAV audio from Mp4 Video
+    extractWavFromMp4(videoFilePath, audioFilePath)
 
-     //Split Wav file into chunks
-     val chunkSizeMs = 50 // 50 seconds
-     splitWavToChunk(audioFilePath, chunkSizeMs)
+    //Split Wav file into chunks
+    val chunkSizeMs = 50 // 50 seconds
+    splitWavToChunk(audioFilePath, chunkSizeMs)
 
     val audioFolder = readAudioChunksFiles()
 
@@ -37,10 +52,17 @@ import javax.sound.sampled.AudioSystem
 
     combineTextFiles(chunkSizeMs, audioFolder.size)
 //    combineTextFiles(50, 201)
-
 }
 
 public fun readAudioChunksFiles() = File("audio_chunks").walkTopDown().filter { it.isFile }.toList()
+
+
+public fun splitMp4ToChunk(videoFilePaht: String, chunkSizeMs: Int) {
+    "cmd.exe /c ffmpeg -i $videoFilePaht -f segment -segment_time $chunkSizeMs video_chunks/chunk%d.mp4".runCommand(
+        timeout = 0,
+        outPutFile = "salida.txt"
+    )
+}
 
 public fun splitWavToChunk(audioFilePath: String, chunkSizeMs: Int) {
     "cmd.exe /c ffmpeg -i $audioFilePath -f segment -segment_time $chunkSizeMs audio_chunks/chunk%d.wav".runCommand(
@@ -68,23 +90,26 @@ data class Variables(val videoFilePath: String, val audioFilePath:String, var ch
  */
 public fun resetFolders(audioFilePath: String) {
 
+    deleteFile(audioFilePath)
+    deleteFile("transcription.txt")
+
+    resetFolder("text_chunks")
+    resetFolder("audio_chunks")
+    resetFolder("video_chunks")
+
+}
+
+private fun deleteFile(audioFilePath: String) {
     if (File(audioFilePath).exists()) {
         File(audioFilePath).delete()
     }
+}
 
-    if (File("text_chunks").exists()) {
-        File("text_chunks").deleteRecursively()
+private fun resetFolder(pathname: String) {
+    if (File(pathname).exists()) {
+        File(pathname).deleteRecursively()
     }
-    File("text_chunks").mkdir()
-
-    if (File("audio_chunks").exists()) {
-        File("audio_chunks").deleteRecursively()
-    }
-    File("audio_chunks").mkdir()
-
-    if (File("transcription.txt").exists()) {
-        File("transcription.txt").delete()
-    }
+    File(pathname).mkdir()
 }
 
 /**
@@ -187,29 +212,11 @@ fun cleanOutputRecognizedText(result: String): String {
 
 }
 
-public fun getListValues(): Flux<String> {
-    return Flux.fromIterable(listOf("a", "javier", "test"))
-}
 
-public fun generateScriptMono(monoFile: Mono<File>): Mono<String> {
-    return monoFile
-        .map { algo:File -> algo.nameWithoutExtension }
-/*        .map { fileName -> "text_chunks/$fileName.txt" }
-//        .log()
-        .map { fullPath ->
-           val file = File(fullPath)
-            if (file.createNewFile()) {
-                val output = speechRecognitionOffline(file.path)
-                file.appendText(output + "\n")
-            }
-            file
-          }*/
-}
 
 fun String.runCommand(workingDir: File? = null, timeout:Long, outPutFile:String) {
-    if (File(outPutFile).exists()) {
-        File(outPutFile).delete()
-    }
+    deleteFile(outPutFile)
+
     val process = ProcessBuilder(*split(" ").toTypedArray())
         .directory(workingDir)
         .redirectOutput(ProcessBuilder.Redirect.appendTo(File(outPutFile)))
@@ -228,3 +235,4 @@ fun String.runCommand(workingDir: File? = null, timeout:Long, outPutFile:String)
 
 
 }
+

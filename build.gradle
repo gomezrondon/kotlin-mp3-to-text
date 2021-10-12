@@ -10,10 +10,8 @@ buildscript {
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.5.20'
     id 'application'
-    id 'org.springframework.boot' version '2.5.2'
 }
 
-apply plugin: 'io.spring.dependency-management'
 apply plugin: 'kotlin'
 
 group = 'com.gomezrondon'
@@ -26,8 +24,7 @@ repositories {
     }
 }
 dependencies {
-    implementation 'io.projectreactor:reactor-core:3.4.9'
-    testImplementation 'io.projectreactor:reactor-test:3.4.9'
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
 
     implementation group: 'net.java.dev.jna', name: 'jna', version: '5.7.0'
@@ -45,6 +42,21 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-application {
-    mainClassName = 'Main2Kt'
+//application {
+//    mainClassName = 'Main2Kt'
+//}
+
+task uberJar(type: Jar){
+    manifest {
+        attributes 'Main-Class': 'MainKt'
+    }
+
+    from sourceSets.main.output
+
+    dependsOn configurations.runtimeClasspath
+
+    from{
+        configurations.runtimeClasspath.findAll{it.name.endsWith('jar')}.collect{ zipTree(it)}
+    }
+
 }
